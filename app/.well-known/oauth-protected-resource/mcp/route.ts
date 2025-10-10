@@ -5,4 +5,6 @@ const handler = (req: Request) => {
   return protectedResourceHandler(req, '/mcp');
 };
 
-export { handler as GET, metadataCorsOptionsRequestHandler as OPTIONS };
+const corsHandler = metadataCorsOptionsRequestHandler();
+
+export { handler as GET, corsHandler as OPTIONS };

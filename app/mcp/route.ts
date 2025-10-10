@@ -2,6 +2,8 @@ import { baseURL } from "@/baseUrl";
 import { createMcpHandler, withMcpAuth } from "mcp-handler";
 import { z } from "zod";
 import { validateToken } from "./auth-utils";
+// import { buyDomain } from "./domains";
+import { Vercel } from "@vercel/sdk";
 
 const getAppsSdkCompatibleHtml = async (baseUrl: string, path: string) => {
   const result = await fetch(`${baseUrl}${path}`);
@@ -32,24 +34,26 @@ const handler = createMcpHandler(
   async (server) => {
   const html = await getAppsSdkCompatibleHtml(baseURL, "/");
 
-  const contentWidget: ContentWidget = {
-    id: "show_content",
-    title: "Show Content",
-    templateUri: "ui://widget/content-template.html",
-    invoking: "Loading content...",
-    invoked: "Content loaded",
+  // Domain widget configuration
+  const domainWidget: ContentWidget = {
+    id: "domain_search",
+    title: "Domain Search",
+    templateUri: "ui://widget/domain-template.html",
+    invoking: "Checking domain availability...",
+    invoked: "Domain search complete",
     html: html,
-    description: "Displays the homepage content",
+    description: "Search and display domain availability and pricing",
   };
+
   server.registerResource(
-    "content-widget",
-    contentWidget.templateUri,
+    "domain-widget",
+    domainWidget.templateUri,
     {
-      title: contentWidget.title,
-      description: contentWidget.description,
+      title: domainWidget.title,
+      description: domainWidget.description,
       mimeType: "text/html+skybridge",
       _meta: {
-        "openai/widgetDescription": contentWidget.description,
+        "openai/widgetDescription": domainWidget.description,
         "openai/widgetPrefersBorder": true,
       },
     },
@@ -58,9 +62,9 @@ const handler = createMcpHandler(
         {
           uri: uri.href,
           mimeType: "text/html+skybridge",
-          text: `<html>${contentWidget.html}</html>`,
+          text: `<html>${domainWidget.html}</html>`,
           _meta: {
-            "openai/widgetDescription": contentWidget.description,
+            "openai/widgetDescription": domainWidget.description,
             "openai/widgetPrefersBorder": true,
           },
         },
@@ -68,33 +72,107 @@ const handler = createMcpHandler(
     })
   );
 
+  // Register custom domain availability tool with widget support
   server.registerTool(
-    contentWidget.id,
+    'check_domain_availability_and_price',
     {
-      title: contentWidget.title,
-      description:
-        "Fetch and display the homepage content with the name of the user",
+      title: 'Check Domain Availability',
+      description: 'Check if domain names are available for purchase and get pricing information',
       inputSchema: {
-        name: z.string().describe("The name of the user to display on the homepage"),
+        names: z
+          .array(z.string().min(1, "Domain name cannot be empty")).max(10, "You can only check up to 10 domains at a time")
+          .min(1, "At least one domain name is required")
+          .describe('Array of domain names to check availability for (e.g., ["example.com", "test.org"])'),
       },
-      _meta: widgetMeta(contentWidget),
+      _meta: widgetMeta(domainWidget),
     },
-    async ({ name }) => {
-      return {
-        content: [
-          {
-            type: "text",
-            text: name,
+    async ({ names }, extra) => {
+      try {
+        const vercel = new Vercel({
+          bearerToken: extra.authInfo?.token,
+        });
+
+        const results = await Promise.all(
+          names.map(async (name: string) => {
+            try {
+              const availabilityResult = await vercel.domains.checkDomainStatus({ name });
+              const available = availabilityResult.available;
+              
+              let price = null;
+              let period = null;
+              let priceError = null;
+              
+              if (available) {
+                try {
+                  const priceResult = await vercel.domains.checkDomainPrice({ name });
+                  price = priceResult.price;
+                  period = priceResult.period;
+                } catch (priceErr) {
+                  priceError = priceErr instanceof Error ? priceErr.message : 'Unknown price check error';
+                }
+              }
+              
+              const message = available 
+                ? (price !== null && period !== null
+                   ? `Domain ${name} is available for $${price} USD for ${period} year${period > 1 ? 's' : ''}`
+                   : `Domain ${name} is available (price check failed: ${priceError})`)
+                : `Domain ${name} is not available for purchase`;
+              
+              return {
+                name,
+                available,
+                price,
+                period,
+                priceError,
+                message,
+              };
+            } catch (error) {          
+              return {
+                name,
+                available: false,
+                price: null,
+                period: null,
+                error: error instanceof Error ? error.message : 'Unknown error',
+                message: `Failed to check availability for domain ${name}`,
+              };
+            }
+          })
+        );
+
+        const availableCount = results.filter((r: any) => r.available).length;
+        const totalCount = results.length;
+        const totalPrice = results
+          .filter((r: any) => r.available && r.price !== null)
+          .reduce((sum: number, r: any) => sum + (r.price || 0), 0);
+        
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Checked ${totalCount} domain${totalCount > 1 ? 's' : ''}: ${availableCount} available`,
+            },
+          ],
+          structuredContent: {
+            message: `Checked ${totalCount} domain${totalCount > 1 ? 's' : ''}: ${availableCount} available, ${totalCount - availableCount} unavailable or failed${totalPrice > 0 ? `. Total cost for available domains: $${totalPrice} USD` : ''}`,
+            results,
+            summary: {
+              total: totalCount,
+              available: availableCount,
+              unavailable: totalCount - availableCount,
+              totalPrice,
+            },
           },
-        ],
-        structuredContent: {
-          name: name,
-          timestamp: new Date().toISOString(),
-        },
-        _meta: widgetMeta(contentWidget),
-      };
+          _meta: widgetMeta(domainWidget),
+        };
+      } catch (error) {
+        throw error;
+      }
     }
-  );},
+  );
+
+  // Register buy domain tool
+  // buyDomain(server);
+},
   {
     serverInfo: {
       name: 'Vercel MCP Server',

@@ -11,6 +11,9 @@ importers:
       '@modelcontextprotocol/sdk':
         specifier: ^1.20.0
         version: 1.20.0
+      '@vercel/sdk':
+        specifier: ^1.13.8
+        version: 1.13.8(@modelcontextprotocol/sdk@1.20.0)
       mcp-handler:
         specifier: ^1.0.2
         version: 1.0.2(@modelcontextprotocol/sdk@1.20.0)(next@15.5.4(react-dom@19.1.0(react@19.1.0))(react@19.1.0))
@@ -386,6 +389,15 @@ packages:
 
   '@types/react@19.2.2':
     resolution: {integrity: sha512-6mDvHUFSjyT2B2yeNx2nUgMxh9LtOWvkhIU3uePn2I2oyNymUAX1NIsdgviM4CH+JSrp2D2hsMvJOkxY+0wNRA==}
+
+  '@vercel/sdk@1.13.8':
+    resolution: {integrity: sha512-VF6jaBfajC2qE/zl8jb1pIi5rWXDI9F9amWghIUpg8uv3X31CrqoUQXzp3LaT2Fknq1exsTgGozf2Ce0emOCpA==}
+    hasBin: true
+    peerDependencies:
+      '@modelcontextprotocol/sdk': '>=1.5.0 <1.10.0'
+    peerDependenciesMeta:
+      '@modelcontextprotocol/sdk':
+        optional: true
 
   accepts@2.0.0:
     resolution: {integrity: sha512-5cvg6CtKwfgdmVqY1WIiXKc3Q1bkRqGLi+2W/6ao+6Y7gu/RCwRuAhGEzh5B4KlszSuTLgZYuqFqo5bImjNKng==}
@@ -1242,6 +1254,12 @@ snapshots:
   '@types/react@19.2.2':
     dependencies:
       csstype: 3.1.3
+
+  '@vercel/sdk@1.13.8(@modelcontextprotocol/sdk@1.20.0)':
+    dependencies:
+      zod: 3.24.2
+    optionalDependencies:
+      '@modelcontextprotocol/sdk': 1.20.0
 
   accepts@2.0.0:
     dependencies:
