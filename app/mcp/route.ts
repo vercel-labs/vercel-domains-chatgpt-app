@@ -1,6 +1,7 @@
 import { baseURL } from "@/baseUrl";
-import { createMcpHandler } from "mcp-handler";
+import { createMcpHandler, withMcpAuth } from "mcp-handler";
 import { z } from "zod";
+import { validateToken } from "./auth-utils";
 
 const getAppsSdkCompatibleHtml = async (baseUrl: string, path: string) => {
   const result = await fetch(`${baseUrl}${path}`);
@@ -27,7 +28,8 @@ function widgetMeta(widget: ContentWidget) {
   } as const;
 }
 
-const handler = createMcpHandler(async (server) => {
+const handler = createMcpHandler(
+  async (server) => {
   const html = await getAppsSdkCompatibleHtml(baseURL, "/");
 
   const contentWidget: ContentWidget = {
@@ -92,8 +94,52 @@ const handler = createMcpHandler(async (server) => {
         _meta: widgetMeta(contentWidget),
       };
     }
-  );
-});
+  );},
+  {
+    serverInfo: {
+      name: 'Vercel MCP Server',
+      version: '2',
+    },
+  },
+  {
+    basePath: '/',
+    // streamableHttpEndpoint: '/',
+  },
+);
 
-export const GET = handler;
-export const POST = handler;
+const authHandler = withMcpAuth(
+  handler,
+  async (_, token) => {
+    if (!token) {
+      return undefined;
+    }
+
+    try {
+      const vercelToken = await validateToken(token);
+
+      if (!vercelToken) {
+        return undefined;
+      }
+
+      return {
+        token,
+        scopes: [],
+        clientId: vercelToken.client_id,
+        extra: {
+          sub: vercelToken.sub,
+        },
+      };
+    } catch (error) {
+      return undefined;
+    }
+  },
+  {
+    required: true,
+    resourceMetadataPath: '/.well-known/oauth-protected-resource/mcp',
+  },
+);
+
+
+
+export const GET = authHandler;
+export const POST = authHandler;
