@@ -14,19 +14,26 @@ type DomainResult = {
 };
 
 type DomainCheckOutput = {
-  message?: string;
-  results?: DomainResult[];
-  summary?: {
-    total: number;
-    available: number;
-    unavailable: number;
-    totalPrice: number;
+  result?: {
+    structuredContent?: {
+      message?: string;
+      results?: DomainResult[];
+      summary?: {
+        total: number;
+        available: number;
+        unavailable: number;
+        totalPrice: number;
+      };
+    };
   };
 };
 
 export default function Home() {
   const toolOutput = useWidgetProps<DomainCheckOutput>();
   console.log('toolOutput', toolOutput);
+  
+  // Extract the actual domain data from the nested structure
+  const domainData = toolOutput?.result?.structuredContent;
 
   return (
     <div className="font-sans min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
@@ -54,10 +61,10 @@ export default function Home() {
         </div>
 
         {/* Results Section */}
-        {toolOutput?.results && toolOutput.results.length > 0 ? (
+        {domainData?.results && domainData.results.length > 0 ? (
           <div className="space-y-6">
             {/* Summary Card */}
-            {toolOutput.summary && (
+            {domainData.summary && (
               <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-6 border border-slate-200 dark:border-slate-700">
                 <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-4">
                   Summary
@@ -65,7 +72,7 @@ export default function Home() {
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                   <div className="text-center">
                     <div className="text-3xl font-bold text-slate-900 dark:text-white">
-                      {toolOutput.summary.total}
+                      {domainData.summary.total}
                     </div>
                     <div className="text-sm text-slate-600 dark:text-slate-400">
                       Total Checked
@@ -73,7 +80,7 @@ export default function Home() {
                   </div>
                   <div className="text-center">
                     <div className="text-3xl font-bold text-green-600 dark:text-green-400">
-                      {toolOutput.summary.available}
+                      {domainData.summary.available}
                     </div>
                     <div className="text-sm text-slate-600 dark:text-slate-400">
                       Available
@@ -81,7 +88,7 @@ export default function Home() {
                   </div>
                   <div className="text-center">
                     <div className="text-3xl font-bold text-red-600 dark:text-red-400">
-                      {toolOutput.summary.unavailable}
+                      {domainData.summary.unavailable}
                     </div>
                     <div className="text-sm text-slate-600 dark:text-slate-400">
                       Unavailable
@@ -89,7 +96,7 @@ export default function Home() {
                   </div>
                   <div className="text-center">
                     <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">
-                      ${toolOutput.summary.totalPrice}
+                      ${domainData.summary.totalPrice}
                     </div>
                     <div className="text-sm text-slate-600 dark:text-slate-400">
                       Total Cost
@@ -104,7 +111,7 @@ export default function Home() {
               <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-4">
                 Domain Results
               </h2>
-              {toolOutput.results.map((result, index) => (
+              {domainData.results.map((result, index) => (
                 <div
                   key={index}
                   className={`bg-white dark:bg-slate-800 rounded-xl shadow-md p-6 border-2 transition-all hover:shadow-lg ${
