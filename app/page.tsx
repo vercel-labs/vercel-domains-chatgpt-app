@@ -70,12 +70,12 @@ export default function Home() {
   const domainData = toolOutput?.result?.structuredContent;
 
   return (
-    <div className="font-sans min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 relative">
-      {/* Fullscreen Toggle Buttons */}
-      {displayMode !== "fullscreen" ? (
+    <div className={`font-sans min-h-md ${displayMode === 'fullscreen' ? 'h-full' : 'max-h-[400px]'} overflow-y-auto bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 relative`}>
+      {/* Fullscreen Open Button */}
+      {displayMode !== "fullscreen" && (
         <button
           aria-label="Enter fullscreen"
-          className="fixed top-4 right-4 z-50 rounded-full bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 shadow-lg ring-1 ring-slate-900/10 dark:ring-white/10 p-2.5 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+          className="fixed top-4 right-4 z-50 rounded-full bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 shadow-lg ring-1 ring-slate-900/10 dark:ring-white/10 p-2.5 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors cursor-pointer"
           onClick={() => {
             if (typeof window !== "undefined" && window?.openai?.requestDisplayMode) {
               window.openai.requestDisplayMode({ mode: "fullscreen" });
@@ -97,32 +97,25 @@ export default function Home() {
             />
           </svg>
         </button>
-      ) : (
-        <button
-          aria-label="Exit fullscreen"
-          className="fixed top-4 right-4 z-50 rounded-full bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 shadow-lg ring-1 ring-slate-900/10 dark:ring-white/10 p-2.5 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
-          onClick={() => {
-            if (typeof window !== "undefined" && window?.openai?.requestDisplayMode) {
-              window.openai.requestDisplayMode({ mode: "inline" });
-            }
-          }}
-        >
-          <svg
-            className="w-5 h-5"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth={1.5}
-            viewBox="0 0 24 24"
-            aria-hidden="true"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5l5.25 5.25"
-            />
-          </svg>
-        </button>
       )}
+
+      {/* View in Vercel Button */}
+      {displayMode !== "fullscreen" && <a
+        href="https://vercel.com"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="fixed bottom-6 left-6 z-50 rounded-full bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 shadow-lg ring-1 ring-slate-900/10 dark:ring-white/10 px-4 py-2.5 flex items-center gap-2 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+      >
+        <svg
+          className="w-3 h-3"
+          viewBox="0 0 76 65"
+          fill="currentColor"
+          aria-hidden="true"
+        >
+          <path d="M37.5274 0L75.0548 65H0L37.5274 0Z" />
+        </svg>
+        <span className="font-semibold text-sm">View in Vercel</span>
+      </a>}
       
       <div className="max-w-7xl mx-auto px-4 py-12 sm:px-6 lg:px-8">
         {domainData?.results && domainData.results.length > 0 ? (
