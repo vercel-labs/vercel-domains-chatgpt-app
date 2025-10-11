@@ -26,6 +26,7 @@ type DomainCheckOutput = {
 
 export default function Home() {
   const toolOutput = useWidgetProps<DomainCheckOutput>();
+  console.log('toolOutput', toolOutput);
 
   return (
     <div className="font-sans min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">

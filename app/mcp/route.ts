@@ -93,14 +93,20 @@ const handler = createMcpHandler(
           bearerToken: extra.authInfo?.token,
         });
 
+        // Use bulk availability check for efficiency
+        const bulkResult = await vercel.domainsRegistrar.getBulkAvailability({
+          teamId: teamId,
+          requestBody: {
+            domains: names,
+          },
+        });
+
+        // Process results and get pricing for available domains
         const results = await Promise.all(
           names.map(async (name: string) => {
             try {
-              const result = await vercel.domainsRegistrar.getDomainAvailability({
-                domain: name,
-                teamId: teamId,
-              });
-              const available = result.available;
+              const domainAvailability = bulkResult.results?.find((d: { domain: string; available: boolean }) => d.domain === name);
+              const available = domainAvailability?.available ?? false;
               
               let price = null;
               let period = null;
@@ -108,13 +114,13 @@ const handler = createMcpHandler(
               
               if (available) {
                 try {
-                  const result = await vercel.domainsRegistrar.getDomainPrice({
+                  const priceResult = await vercel.domainsRegistrar.getDomainPrice({
                     domain: name,
                     teamId: teamId,
                   });
 
-                  price = result.purchasePrice;
-                  period = result.years;
+                  price = priceResult.purchasePrice;
+                  period = priceResult.years;
                 } catch (priceErr) {
                   priceError = priceErr instanceof Error ? priceErr.message : 'Unknown price check error';
                 }
