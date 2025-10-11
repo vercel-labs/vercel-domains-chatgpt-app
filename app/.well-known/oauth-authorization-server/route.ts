@@ -1,7 +1,9 @@
 import { metadataCorsOptionsRequestHandler } from 'mcp-handler';
 import { authorizationServerHandler } from '../metadata-handlers';
 
+const corsHandler = metadataCorsOptionsRequestHandler();
+
 export {
   authorizationServerHandler as GET,
-  metadataCorsOptionsRequestHandler as OPTIONS,
+  corsHandler as OPTIONS,
 };
