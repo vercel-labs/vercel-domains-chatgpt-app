@@ -83,10 +83,11 @@ const handler = createMcpHandler(
           .array(z.string().min(1, "Domain name cannot be empty")).max(10, "You can only check up to 10 domains at a time")
           .min(1, "At least one domain name is required")
           .describe('Array of domain names to check availability for (e.g., ["example.com", "test.org"])'),
+        teamId: z.string().optional().describe('The team ID to check domain availability for'),
       },
       _meta: widgetMeta(domainWidget),
     },
-    async ({ names }, extra) => {
+    async ({ names, teamId }, extra) => {
       try {
         const vercel = new Vercel({
           bearerToken: extra.authInfo?.token,
@@ -95,8 +96,11 @@ const handler = createMcpHandler(
         const results = await Promise.all(
           names.map(async (name: string) => {
             try {
-              const availabilityResult = await vercel.domains.checkDomainStatus({ name });
-              const available = availabilityResult.available;
+              const result = await vercel.domainsRegistrar.getDomainAvailability({
+                domain: name,
+                teamId: teamId,
+              });
+              const available = result.available;
               
               let price = null;
               let period = null;
@@ -104,9 +108,13 @@ const handler = createMcpHandler(
               
               if (available) {
                 try {
-                  const priceResult = await vercel.domains.checkDomainPrice({ name });
-                  price = priceResult.price;
-                  period = priceResult.period;
+                  const result = await vercel.domainsRegistrar.getDomainPrice({
+                    domain: name,
+                    teamId: teamId,
+                  });
+
+                  price = result.purchasePrice;
+                  period = result.years;
                 } catch (priceErr) {
                   priceError = priceErr instanceof Error ? priceErr.message : 'Unknown price check error';
                 }
