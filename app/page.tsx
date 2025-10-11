@@ -99,7 +99,7 @@ export default function Home() {
         </button>
       )}
 
-      {/* View in Vercel Button */}
+      {/* Open in Vercel Button */}
       {displayMode !== "fullscreen" && <a
         href="https://vercel.com"
         target="_blank"
@@ -114,7 +114,7 @@ export default function Home() {
         >
           <path d="M37.5274 0L75.0548 65H0L37.5274 0Z" />
         </svg>
-        <span className="font-semibold text-sm">View in Vercel</span>
+        <span className="font-semibold text-sm">Open in Vercel</span>
       </a>}
       
       <div className="max-w-7xl mx-auto px-4 py-12 sm:px-6 lg:px-8">
