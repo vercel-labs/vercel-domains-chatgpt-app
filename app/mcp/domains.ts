@@ -91,17 +91,25 @@ export const buyDomain = defineToolWithVercel({
       .describe('The domain name to purchase (e.g., example.com)'),
     expectedPrice: z
       .number()
-      .optional()
       .describe('The price you expect to be charged for the purchase'),
-    renew: z
+    years: z
+      .number()
+      .optional()
+      .default(1)
+      .describe('The number of years to purchase the domain for (default: 1)'),
+    autoRenew: z
       .boolean()
       .optional()
       .default(true)
       .describe('Whether the domain should be automatically renewed'),
+    teamId: z
+      .string()
+      .optional()
+      .describe('The team ID to purchase the domain for'),
     country: z
       .string()
-      .describe('The country of the domain registrant (e.g., US)'),
-    orgName: z
+      .describe('The country of the domain registrant (ISO 3166-1 alpha-2, e.g., US)'),
+    companyName: z
       .string()
       .optional()
       .describe('The company name of the domain registrant'),
@@ -114,18 +122,22 @@ export const buyDomain = defineToolWithVercel({
     address1: z
       .string()
       .describe('The street address of the domain registrant'),
+    address2: z
+      .string()
+      .optional()
+      .describe('Additional address line (optional)'),
     city: z
       .string()
       .describe('The city of the domain registrant'),
     state: z
       .string()
       .describe('The state/province of the domain registrant'),
-    postalCode: z
+    zip: z
       .string()
-      .describe('The postal code of the domain registrant'),
+      .describe('The postal/zip code of the domain registrant'),
     phone: z
       .string()
-      .describe('The phone number of the domain registrant (e.g., +1.4158551452)'),
+      .describe('The phone number of the domain registrant (E.164 format, e.g., +14158551452)'),
     email: z
       .string()
       .email()
@@ -133,52 +145,38 @@ export const buyDomain = defineToolWithVercel({
   },
   execute: async ({ args, vercel, teamId }) => {
     try {
-      const requestBody: {
-        name: string;
-        renew: boolean;
-        country: string;
-        firstName: string;
-        lastName: string;
-        address1: string;
-        city: string;
-        state: string;
-        postalCode: string;
-        phone: string;
-        email: string;
-        expectedPrice?: number;
-        orgName?: string;
-      } = {
-        name: args.name as string,
-        renew: args.renew as boolean,
-        country: args.country as string,
-        firstName: args.firstName as string,
-        lastName: args.lastName as string,
-        address1: args.address1 as string,
-        city: args.city as string,
-        state: args.state as string,
-        postalCode: args.postalCode as string,
-        phone: args.phone as string,
-        email: args.email as string,
-      };
-
-      if (args.expectedPrice !== undefined) {
-        requestBody.expectedPrice = args.expectedPrice as number;
-      }
-
-      if (args.orgName !== undefined) {
-        requestBody.orgName = args.orgName as string;
-      }
-
-      const result = await vercel.domains.buyDomain({
-        ...(teamId && { teamId }),
-        requestBody,
+      const result = await vercel.domainsRegistrar.buyDomains({
+        teamId: (args.teamId as string | undefined) || teamId,
+        requestBody: {
+          domains: [
+            {
+              domainName: args.name as string,
+              autoRenew: (args.autoRenew as boolean) ?? true,
+              years: (args.years as number) ?? 1,
+              expectedPrice: args.expectedPrice as number,
+            }
+          ],
+          contactInformation: {
+            firstName: args.firstName as string,
+            lastName: args.lastName as string,
+            email: args.email as string,
+            phone: args.phone as string,
+            address1: args.address1 as string,
+            address2: args.address2 as string | undefined,
+            city: args.city as string,
+            state: args.state as string,
+            zip: args.zip as string,
+            country: args.country as string,
+            companyName: args.companyName as string | undefined,
+          },
+        },
       });
+      
       return {
         message: `Domain ${args.name} has been successfully purchased`,
-        domain: result.domain,
+        result,
       };
     } catch (error) {
-      
       // Re-throw the error to let the MCP framework handle it
       throw error;
     }

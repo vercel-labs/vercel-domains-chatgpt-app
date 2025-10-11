@@ -1,7 +1,11 @@
 "use client";
 
-import { useWidgetProps } from "./hooks/use-widget-props";
-import { useDisplayMode } from "./hooks/use-display-mode";
+import { 
+  useWidgetProps, 
+  useDisplayMode, 
+  useSendMessage,
+  useRequestDisplayMode,
+} from "./hooks";
 
 type DomainResult = {
   name: string;
@@ -63,6 +67,8 @@ const MOCK_DATA: DomainCheckOutput = {
 export default function Home() {
   const toolOutput = useWidgetProps<DomainCheckOutput>();
   const displayMode = useDisplayMode();
+  const sendMessage = useSendMessage();
+  const requestDisplayMode = useRequestDisplayMode();
   
   // Extract the actual domain data from the nested structure
   // Uncomment the line below to test with mock data
@@ -76,11 +82,7 @@ export default function Home() {
         <button
           aria-label="Enter fullscreen"
           className="fixed top-4 right-4 z-50 rounded-full bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 shadow-lg ring-1 ring-slate-900/10 dark:ring-white/10 p-2.5 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors cursor-pointer"
-          onClick={() => {
-            if (typeof window !== "undefined" && window?.openai?.requestDisplayMode) {
-              window.openai.requestDisplayMode({ mode: "fullscreen" });
-            }
-          }}
+          onClick={() => requestDisplayMode("fullscreen")}
         >
           <svg
             className="w-5 h-5"
@@ -192,8 +194,13 @@ export default function Home() {
                               </div>
                             </div>
                             <button
-                              className="p-2 rounded-md hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
-                              aria-label={`Add ${result.name} to cart`}
+                              className="p-2 rounded-md hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+                              aria-label={`Buy ${result.name}`}
+                              onClick={() => {
+                                sendMessage(
+                                  `I want to buy ${result.name} for $${result.price}${result.period && result.period > 1 ? ` for ${result.period} years` : ''}.`
+                                );
+                              }}
                             >
                               <svg
                                 className="w-5 h-5 text-slate-700 dark:text-slate-300"

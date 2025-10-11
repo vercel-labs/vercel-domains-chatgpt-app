@@ -2,7 +2,7 @@ import { baseURL } from "@/baseUrl";
 import { createMcpHandler, withMcpAuth } from "mcp-handler";
 import { z } from "zod";
 import { validateToken } from "./auth-utils";
-// import { buyDomain } from "./domains";
+import { buyDomain } from "./domains";
 import { Vercel } from "@vercel/sdk";
 
 const getAppsSdkCompatibleHtml = async (baseUrl: string, path: string) => {
@@ -185,7 +185,7 @@ const handler = createMcpHandler(
   );
 
   // Register buy domain tool
-  // buyDomain(server);
+  buyDomain(server);
 },
   {
     serverInfo: {
